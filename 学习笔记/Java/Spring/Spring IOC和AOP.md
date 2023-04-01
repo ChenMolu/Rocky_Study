@@ -80,7 +80,7 @@ Spring核心容器的主要组件是Bean工厂（BeanFactory），Bean工厂使�
 
 **DI（Dependency Injection）依赖注入**
 
-![1629735078619](image/Spring IOC和AOP.assets/1629735078619.png)
+![1629735078619](./image/Spring%20IOC和AOP.assets/1629735078619.png)
 
 *(1) 什么是依赖注入呢?*
 
@@ -99,7 +99,7 @@ Spring核心容器的主要组件是Bean工厂（BeanFactory），Bean工厂使�
 
 **反转** ：控制权交给外部环境（Spring 框架、IoC 容器）
 
-![img](image/Spring IOC和AOP.assets/v2-005b53a7d400a5c21314ae58cbd606b7_720w.webp)
+![img](./image/Spring%20IOC和AOP.assets/v2-005b53a7d400a5c21314ae58cbd606b7_720w.webp)
 
 
 
@@ -307,7 +307,7 @@ public class BookDaoImpl implements BookDao {
 
 当在App类中从容器中获取bookDao对象后，分别执行其`save`,`delete`,`update`和`select`方法后会有如下的打印结果:
 
-![1630143927489](image/Spring IOC和AOP.assets/1630143927489.png)
+![1630143927489](./image/Spring%20IOC和AOP.assets/1630143927489.png)
 
 这个时候，我们就应该有些疑问?
 
@@ -320,7 +320,7 @@ public class BookDaoImpl implements BookDao {
 
 说了这么多，Spring到底是如何实现的呢?
 
-![1630144353462](image/Spring IOC和AOP.assets/1630144353462.png)
+![1630144353462](./image/Spring%20IOC和AOP.assets/1630144353462.png)
 
 (1)前面一直在强调，Spring的AOP是对一个类的方法在不进行任何修改的前提下实现增强。对于上面的案例中BookServiceImpl中有`save`,`update`,`delete`和`select`方法,这些方法我们给起了一个名字叫==连接点==
 

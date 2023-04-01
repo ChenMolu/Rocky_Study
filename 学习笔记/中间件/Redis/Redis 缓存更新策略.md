@@ -39,39 +39,39 @@
 
 ### 数据一致性的解决方案
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-537a505f-1f3f-4f23-b5e3-209c8c8a9281.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-537a505f-1f3f-4f23-b5e3-209c8c8a9281.png)
 
 #### 1. 先写MySQL，再写Redis
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-9ac6e9ab-dd82-40a5-b71b-836c745ed8ac.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-9ac6e9ab-dd82-40a5-b71b-836c745ed8ac.png)
 
 #### 2. 先写Redis，再写MySQL
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-c50e7ef0-40aa-4931-982a-a9aa31faa6f1.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-c50e7ef0-40aa-4931-982a-a9aa31faa6f1.png)
 
 #### 3. 先删除Redis，再写MySQL
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-0fec5605-5530-4b12-af0e-2b529c41e6e6.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-0fec5605-5530-4b12-af0e-2b529c41e6e6.png)
 
 #### 4. 先删除 Redis，再写 MySQL，再删除 Redis（缓存双删)
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-1fe439cd-83fe-487f-a7ba-578a84839616.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-1fe439cd-83fe-487f-a7ba-578a84839616.png)
 
 关于缓存第二次删除的解决方案有两种：
 
 - 可以直接让A最后一个的缓存删除设置一个时间500ms（不太靠谱）
 - **异步串行化删除，即删除请求入队列**
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-6cb3caf1-c85b-4361-8e29-9e71361fd0c8.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-6cb3caf1-c85b-4361-8e29-9e71361fd0c8.png)
 
 #### 5. 先写MySQL，再删除Redis（最推荐）
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-1f0e26a8-49c3-469e-a193-08f9766943aa.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-1f0e26a8-49c3-469e-a193-08f9766943aa.png)
 
 对于不是强一致性要求的业务可以容忍。
 
 #### 6. 先写 MySQL，通过 Binlog，异步更新 Redis
 
-![img](./image/Redis 缓存更新策略/redis-shuju-yizhixing-0da55874-8cf7-4c5a-995b-a0e6611bfac2.png)
+![img](./image/Redis%20缓存更新策略/redis-shuju-yizhixing-0da55874-8cf7-4c5a-995b-a0e6611bfac2.png)
 
 这种方案，主要是监听 MySQL 的 Binlog，然后通过异步的方式，将数据更新到 Redis，这种方案有个前提，查询的请求，不会回写 Redis。这个方案，会保证 MySQL 和 Redis 的最终一致性，但是如果中途请求 B 需要查询数据，如果缓存无数据，就直接查 DB；如果缓存有数据，查询的数据也会存在不一致的情况。
