@@ -10,6 +10,20 @@ HashMap:
 Map<Interger,String> map = new HashMap<int,String>();
 ```
 
+Stack
+```java
+LinkedStack<String> stack = new LinkedStack<>();
+        .push()
+        .pop()
+```
+
+Queue
+```java
+Queue<String> queue = new LinkedList<String>();
+        .offer()
+        .poll()
+```
+
 树节点：
 ```java
 class TreeNode {
