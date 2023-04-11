@@ -110,15 +110,17 @@ HashMap<String, int[]> map = new HashMap<>();
 ```java
 // 判断是否存在Key
 boolean containsKey(Object key)
+boolean containsValue(Object Value)
 
 // 获取Key的对应Value，如果不存在则返回null
 V get(Object key)
 
-// 获取Key的对应Value，如果不存在则返回null
-V getOrDefault(Object key, V defaultValue)
-
 // 将Key和Value存入哈希表
 V put(K key, V value)
+
+// 获取Key的对应Value，如果不存在则返回null
+V getOrDefault(Object key, V defaultValue)
+        
 
 // 将Key和Value存入哈希表，如果存在，则什么都不做
 V putIfAbsent(K key, V value)
@@ -129,7 +131,12 @@ V remove(Object key)
 // 获取哈希表中所有Key
 Set<K> keySet()
 ```
-Stack
+## HashSet
+```java
+Set<String> set = new HashSet<String>();
+```
+
+## Stack
 ```java
 LinkedStack<String> stack = new LinkedStack<>();
 Stack<Interger> stack = new Stack<Interger>();
@@ -156,6 +163,57 @@ Queue
 ```java
 Queue<String> queue = new LinkedList<String>();
 ```
+常用方法：
+```java
+  //如果插入失败，会直接抛出异常
+    boolean add(E e);
+
+    //同样是添加操作，但是插入失败不会抛出异常
+    boolean offer(E e);
+
+    //移除队首元素，但是如果队列已经为空，那么会抛出异常
+    E remove();
+
+       //同样是移除队首元素，但是如果队列为空，会返回null
+    E poll();
+
+    //仅获取队首元素，不进行出队操作，但是如果队列已经为空，那么会抛出异常
+    E element();
+
+    //同样是仅获取队首元素，但是如果队列为空，会返回null
+    E peek();
+```
+Deque 双端队列
+```java
+Deque<String> deque = new LinkedList<>();
+Deque<String> deque = new ArrayDeque<>();   //数组实现的栈和队列
+```
+常用方法：
+```java
+    void addFirst(E e);
+    void addLast(E e);
+        
+    boolean offerFirst(E e);
+    boolean offerLast(E e);
+
+    E removeFirst();
+    E removeLast();
+
+    E pollFirst();
+    E pollLast();
+
+    E getFirst();
+    E getLast();
+
+    E peekFirst();
+    E peekLast();
+
+```
+优先队列：
+```java
+Queue<Integer> queue = new PriorityQueue<>();
+```
+
 常用方法：
 ```java
 // 判断是否为空
