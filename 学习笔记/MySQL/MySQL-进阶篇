@@ -228,6 +228,26 @@ MySQL的索引是在存储引擎层实现的，不同的存储引擎有不同的
 
 ### 2.4 索引语法
 
+创建语法
+
+```sql
+CREATE [UNIQUE|FULLTEXT] INDEX index_name ON table_name (index_column_name,...);
+```
+
+查看索引
+
+```sql
+SHOW INDEX FROM table_name;
+```
+
+删除索引
+
+```sql
+DROP INDEX index_name ON table_name;
+```
+
+ 
+
 ### 2.5 SQL性能分析
 
 #### SQL的执行频率
@@ -345,14 +365,153 @@ SQL提示，是优化数据库的一个重要手段，简单来说，就是在SQ
 ### 2.7 设计原则
 
 1. 针对于数据量较大，且查询较为频繁的表建立索引。
-2. 针对于常作为查询条件（WHERE）、排序（ORDER BY）、分组（GROUP BY）操作的字段建立索引。
+2. 针对于常作为**查询条件（WHERE）**、排序（ORDER BY）、分组（GROUP BY）操作的字段建立索引。
 3. 尽量选择区分度高的列作为索引，尽量建立唯一索引，区分度越高，使用索引的效率越高。
 4. 如果是字符串类型的字段，字段的长度较长，可以针对于字段的特点，建立前缀索引。
 5. 尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率。
 6. 要控制索引的数量，索引并不是多多益善，索引越多，维护索引结构的代价也就越大，会影响增删改的效率。
 7. 如果索引列不能存储NULL值，请在创建表时使用NOT NULL约束它。当优化器知道每列是否包含NULL值时，它可以更好地确定哪个索引最有效地用于查询
 
+## 3. SQL优化
 
+### 插入数据
+
+普通插入：
+
+1. 采用批量插入（一次插入的数据不建议超过1000条）
+
+```sql
+#批量插入数据
+Insert into tb_test values(1,'Tom'),(2,'Cat'),(3,'Jerry');
+```
+
+2. 手动提交事务
+
+```sql
+#手动控制事务的提交
+
+start transaction;
+insert into tb_test values(1,'Tom'),(2,'Cat'),(3,'Jerry');
+insert into tb_test values(4,'Tom'),(5,'Cat'),(6,'Jerry');
+insert into tb_test values(7,'Tom'),(8,'Cat'),(9,'Jerry');
+commit;
+```
+
+3. 主键顺序插入
+
+```sql
+#主键顺序插入，性能要高于乱序插入
+
+主键乱序插入 : 8 1 9 21 88 2 4 15 89 5 7 3
+主键顺序插入 : 1 2 3 4 5 7 8 9 15 21 88 89
+```
+
+**大批量插入：**
+如果一次性需要插入大批量数据，使用insert语句插入性能较低，此时可以使用MySQL数据库提供的**`load`**指令插入。
+
+```mysql
+# 客户端连接服务端时，加上参数 --local-infile（这一行在bash/cmd界面输入）
+mysql --local-infile -u root -p
+# 设置全局参数local_infile为1，开启从本地加载文件导入数据的开关
+set global local_infile = 1;
+select @@local_infile;
+# 执行load指令将准备好的数据，加载到表结构中
+load data local infile '/root/sql1.log' into table 'tb_user' fields terminated by ',' lines terminated by '\n';
+```
+
+### 主键优化
+
+数据组织方式：在InnoDB存储引擎中，表数据都是根据主键顺序组织存放的，这种存储方式的表称为索引组织表（Index organized table, IOT）
+
+**页分裂：**页可以为空，也可以填充一般，也可以填充100%，每个页包含了2-N行数据（如果一行数据过大，会行溢出），根据主键排列。
+**页合并：**当删除一行记录时，实际上记录并没有被物理删除，只是记录被标记（flaged）为删除并且它的空间变得允许被其他记录声明使用。当页中删除的记录到达 MERGE_THRESHOLD（默认为页的50%），InnoDB会开始寻找最靠近的页（前后）看看是否可以将这两个页合并以优化空间使用。
+
+![keySort](./image/MySQL-进阶篇/keySort.png)
+
+MERGE_THRESHOLD：合并页的阈值，可以自己设置，在创建表或创建索引时指定
+
+> 文字说明不够清晰明了，具体可以看视频里的PPT演示过程：https://www.bilibili.com/video/BV1Kr4y1i7ru?p=90
+
+**主键设计原则：**
+
+- 满足业务需求的情况下，尽量降低主键的长度
+- 插入数据时，尽量选择顺序插入，选择使用 AUTO_INCREMENT 自增主键
+- 尽量不要使用 UUID 做主键或者是其他的自然主键，如身份证号
+- 业务操作时，避免对主键的修改
+
+### order by优化
+
+1. Using filesort：通过表的索引或全表扫描，读取满足条件的数据行，然后在排序缓冲区 sort buffer 中完成排序操作，所有不是通过索引直接返回排序结果的排序都叫 FileSort 排序
+2. Using index：通过有序索引顺序扫描直接返回有序数据，这种情况即为 using index，不需要额外排序，操作效率高
+
+几种特殊情况：
+
+如果order by字段全部使用升序排序或者降序排序，则都会走索引；
+
+但是如果一个字段升序排序，另一个字段降序排序，则不会走索引，explain的extra信息显示的是`Using index, Using filesort`；
+
+如果要优化掉Using filesort，则需要另外再创建一个索引，如：`create index idx_user_age_phone_ad on tb_user(age asc, phone desc);`，此时使用`select id, age, phone from tb_user order by age asc, phone desc;`会全部走索引
+
+总结：
+
+- 根据排序字段建立合适的索引，多字段排序时，也遵循最左前缀法则
+- 尽量使用覆盖索引
+- 多字段排序，一个升序一个降序，此时需要注意联合索引在创建时的规则（ASC/DESC）
+- 如果不可避免出现filesort，大数据量排序时，可以适当增大排序缓冲区大小 sort_buffer_size（默认256k）
+
+### group by优化
+
+- 在分组操作时，可以通过索引来提高效率
+- 分组操作时，索引的使用也是满足**最左前缀法则**的
+
+如索引为`idx_user_pro_age_stat`，则句式可以是`select ... where profession order by age`，这样也符合最左前缀法则
+
+### limit优化
+
+常见的问题如`limit 2000000, 10`，此时需要 MySQL 排序前2000000条记录，但仅仅返回2000000 - 2000010的记录，其他记录丢弃，查询排序的代价非常大。
+优化方案：一般分页查询时，通过创建覆盖索引能够比较好地提高性能，可以通过覆盖索引加子查询形式进行优化
+
+例如：
+
+```mysql
+-- 此语句耗时很长
+select * from tb_sku limit 9000000, 10;
+-- 通过覆盖索引加快速度，直接通过主键索引进行排序及查询
+select id from tb_sku order by id limit 9000000, 10;
+-- 下面的语句是错误的，因为 MySQL 不支持 in 里面使用 limit
+-- select * from tb_sku where id in (select id from tb_sku order by id limit 9000000, 10);
+-- 通过连表查询即可实现第一句的效果，并且能达到第二句的速度
+select * from tb_sku as s, (select id from tb_sku order by id limit 9000000, 10) as a where s.id = a.id;
+```
+
+### count优化
+
+MyISAM 引擎把一个表的总行数存在了磁盘上，因此执行 count(\*) 的时候会直接返回这个数，效率很高（前提是不适用where）；
+InnoDB 在执行 count(\*) 时，需要把数据一行一行地从引擎里面读出来，然后累计计数。
+优化方案：自己计数，如创建key-value表存储在内存或硬盘，或者是用redis
+
+count的几种用法：
+
+- 如果count函数的参数（count里面写的那个字段）不是NULL（字段值不为NULL），累计值就加一，最后返回累计值
+- 用法：count(\*)、count(主键)、count(字段)、count(1)
+- count(主键)跟count(\*)一样，因为主键不能为空；count(字段)只计算字段值不为NULL的行；count(1)引擎会为每行添加一个1，然后就count这个1，返回结果也跟count(\*)一样；count(null)返回0
+
+各种用法的性能：
+
+- count(主键)：InnoDB引擎会遍历整张表，把每行的主键id值都取出来，返回给服务层，服务层拿到主键后，直接按行进行累加（主键不可能为空）
+- count(字段)：没有not null约束的话，InnoDB引擎会遍历整张表把每一行的字段值都取出来，返回给服务层，服务层判断是否为null，不为null，计数累加；有not null约束的话，InnoDB引擎会遍历整张表把每一行的字段值都取出来，返回给服务层，直接按行进行累加
+- count(1)：InnoDB 引擎遍历整张表，但不取值。服务层对于返回的每一层，放一个数字 1 进去，直接按行进行累加
+- count(\*)：InnoDB 引擎并不会把全部字段取出来，而是专门做了优化，不取值，服务层直接按行进行累加
+
+按效率排序：count(字段) < count(主键) < count(1) < count(\*)，所以尽量使用 count(\*)
+
+### update优化（避免行锁升级为表锁）
+
+InnoDB 的行锁是针对索引加的锁，不是针对记录加的锁，并且该索引不能失效，否则会从行锁升级为表锁。
+
+如以下两条语句：
+`update student set no = '123' where id = 1;`，这句由于id有主键索引，所以只会锁这一行；
+`update student set no = '123' where name = 'test';`，这句由于name没有索引，所以会把整张表都锁住进行数据更新，解决方法是给name字段添加索引
 
 
 
