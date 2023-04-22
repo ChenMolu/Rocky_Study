@@ -57,8 +57,8 @@ for (char c = 'a'; c <= 'f'; c++) {
 ```
 ## 动态数组ArrayList:
 ```java
-List<Interger> list = new ArrayList<Interger>();
-ArrayList<Interger> list = new ArrayList<Interger>();
+List<Integer> list = new ArrayList<Integer>();
+ArrayList<Integer> list = new ArrayList<Integer>();
 ```
 常用方法：
 ```java
@@ -102,7 +102,7 @@ E removeFirst()
 
 ## 哈希 HashMap:
 ```java
-Map<Interger,String> map = new HashMap<int,String>();
+Map<Integer,String> map = new HashMap<Integer,String>();
 // 初始化一个字符串映射到数组的哈希表
 HashMap<String, int[]> map = new HashMap<>();
 ```
@@ -135,6 +135,19 @@ Set<K> keySet()
 ```java
 Set<String> set = new HashSet<String>();
 ```
+常用方法：
+```java
+public int size()
+
+public boolean isEmpty()
+
+public boolean contains(Object o)
+
+public boolean add(E e)
+
+public boolean remove(Object o)
+```
+
 
 ## Stack
 ```java
