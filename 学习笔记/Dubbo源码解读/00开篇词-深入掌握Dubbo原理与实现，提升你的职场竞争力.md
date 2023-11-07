@@ -4,7 +4,7 @@
 
 一家公司由小做大，业务会不断发展，随之而来的是 DAU、订单量、数据量的不断增长，用来支撑业务的系统复杂度也会不断提高，模块之间的依赖关系也会日益复杂。这时候我们一般会从单体架构进入集群架构（如下图所示），在集群架构中通过负载均衡技术，将流量尽可能均摊到集群中的每台机器上，以此克服单台机器硬件资源的限制，做到横向扩展。
 
-![Drawing 0.png](https://s0.lgstatic.com/i/image/M00/38/A0/Ciqc1F8eQ_eAbHovAAC1BISTRQE943.png)
+![Drawing 0.png](./image/00开篇词-深入掌握Dubbo原理与实现，提升你的职场竞争力/Ciqc1F8eQ_eAbHovAAC1BISTRQE943.png)
 
 <center>单体架构 VS 集群架构</center>
 
