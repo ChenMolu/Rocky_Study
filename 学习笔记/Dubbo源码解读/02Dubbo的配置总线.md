@@ -133,7 +133,7 @@ public class RegistryFactory$Adaptive
 
 我们会看到，在生成的 RegistryFactory$Adaptive 类中会自动实现 getRegistry() 方法，其中会根据 URL 的 Protocol 确定扩展名称，从而确定使用的具体扩展实现类。我们可以找到 RegistryProtocol 这个类，并在其 getRegistry() 方法中打一个断点， Debug 启动上一课时介绍的任意一个 Demo 示例中的 Provider，得到如下图所示的内容：
 
-![Drawing 0.png](https://s0.lgstatic.com/i/image/M00/3B/53/Ciqc1F8j2R2AO15wAAGHCEMA4ig361.png)
+![Drawing 0.png](./image/02Dubbo的配置总线/Ciqc1F8j2R2AO15wAAGHCEMA4ig361.png)
 
 这里传入的 registryUrl 值为：
 
@@ -147,7 +147,7 @@ zookeeper://127.0.0.1:2181/org.apache.dubbo...
 
 我们再来看另一个与 URL 相关的示例。上一课时我们在介绍 Dubbo 的简化架构时提到，Provider 在启动时，会将自身暴露的服务注册到 ZooKeeper 上，具体是注册哪些信息到 ZooKeeper 上呢？我们来看 ZookeeperRegistry.doRegister() 方法，在其中打个断点，然后 Debug 启动 Provider，会得到下图：
 
-![Drawing 1.png](https://s0.lgstatic.com/i/image/M00/3B/53/Ciqc1F8j2aGAJmTVAAI-2XB7V7o382.png)
+![Drawing 1.png](./image/02Dubbo的配置总线/Ciqc1F8j2aGAJmTVAAI-2XB7V7o382.png)
 
 传入的 URL 中包含了 Provider 的地址（172.18.112.15:20880）、暴露的接口（org.apache.dubbo.demo.DemoService）等信息， toUrlPath() 方法会根据传入的 URL 参数确定在 ZooKeeper 上创建的节点路径，还会通过 URL 中的 dynamic 参数值确定创建的 ZNode 是临时节点还是持久节点。
 
@@ -157,7 +157,7 @@ Consumer 启动后会向注册中心进行订阅操作，并监听自己关注�
 
 我们来看 ZookeeperRegistry 这个实现类，它是由上面的 ZookeeperRegistryFactory 工厂类创建的 Registry 接口实现，其中的 doSubscribe() 方法是订阅操作的核心实现，在第 175 行打一个断点，并 Debug 启动 Demo 中 Consumer，会得到下图所示的内容：
 
-![Lark20200731-183202.png](https://s0.lgstatic.com/i/image/M00/3B/6D/CgqCHl8j822Aa3VpAAPpUoCBlf4288.png)
+![Lark20200731-183202.png](./image/02Dubbo的配置总线/CgqCHl8j822Aa3VpAAPpUoCBlf4288.png)
 
 我们看到传入的 URL 参数如下：
 

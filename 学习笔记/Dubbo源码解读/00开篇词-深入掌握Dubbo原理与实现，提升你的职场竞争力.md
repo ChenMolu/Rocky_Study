@@ -12,7 +12,7 @@
 
 另外一个好处是，可以在服务维度进行重用，在需要某个服务的时候，直接接入即可，从而提高开发效率。拆分成独立的服务之后（如下图所示），整个服务可以最大化地实现重用，也可以更加灵活地扩展。
 
-![Drawing 1.png](https://s0.lgstatic.com/i/image/M00/38/A0/Ciqc1F8eRAqAKU1gAAGcFDQgvSc126.png)
+![Drawing 1.png](./image/00开篇词-深入掌握Dubbo原理与实现，提升你的职场竞争力/Ciqc1F8eRAqAKU1gAAGcFDQgvSc126.png)
 
 <div data-nodeid="655">
 <center>微服务架构</center>
@@ -49,7 +49,7 @@ Dubbo 是由阿里开源，后来加入了 Apache 基金会，目前已经从孵
 
 学习和掌握一项技能的时候，一般都是按照“是什么”“怎么用”“为什么”（原理）逐层深入的：
 
-![Drawing 5.png](https://s0.lgstatic.com/i/image/M00/38/AB/CgqCHl8eRDyAaP3fAABjUNh74KM999.png)
+![Drawing 5.png](./image/00开篇词-深入掌握Dubbo原理与实现，提升你的职场竞争力/CgqCHl8eRDyAaP3fAABjUNh74KM999.png)
 
 同样，你可以通过阅读官方文档或是几篇介绍性的文章，迅速了解 Dubbo 是什么；接下来，再去上手，用 Dubbo 写几个项目，从而更加全面地熟悉 Dubbo 的使用方式和特性，成为一名“熟练工”，但这也是很多开发者所处的阶段。而“有技术追求”的开发者，一般不会满足于每天只是写写业务代码，而是会开始研究 Dubbo 的源码实现以及底层原理，这就对应了上图中的核心层：“原理”。
 
