@@ -82,10 +82,10 @@ ServiceLoader.reload() 方法的具体实现，如下所示：
 ```java
 // 缓存，用来缓存 ServiceLoader创建的实现对象 
 private LinkedHashMap<String,S> providers = new LinkedHashMap<>(); 
-public void reload() { 
+public void reload() {
     providers.clear(); // 清空缓存 
     lookupIterator = new LazyIterator(service, loader); // 迭代器 
-} 
+}
 ```
 
 在前面的示例中，main() 方法中使用的迭代器底层就是调用了 ServiceLoader.LazyIterator 实现的。Iterator 接口有两个关键方法：hasNext() 方法和 next() 方法。这里的 LazyIterator 中的next() 方法最终调用的是其 nextService() 方法，hasNext() 方法最终调用的是 hasNextService() 方法，调用关系如下图所示：
@@ -105,7 +105,7 @@ private boolean hasNextService() {
     } 
     if (configs == null) { 
         // PREFIX前缀与服务接口的名称拼接起来，就是META-INF目录下定义的SPI配 
-        // 置文件(即示例中的META-INF/services/com.xxx.Log) 
+        // 置文件(即示例中的 META-INF/services/com.xxx.Log) 
         String fullName = PREFIX + service.getName(); 
         // 加载配置文件 
         if (loader == null) 
@@ -116,7 +116,7 @@ private boolean hasNextService() {
     // 按行SPI遍历配置文件的内容 
     while ((pending == null) || !pending.hasNext()) {  
         if (!configs.hasMoreElements()) { 
-            return false; 
+            return false;
         } 
         // 解析配置文件 
         pending = parse(service, configs.nextElement());  
@@ -227,9 +227,9 @@ static {
 在 getConnection() 方法中，DriverManager 从该 registeredDrivers 集合中获取对应的 Driver 对象创建 Connection，核心实现如下所示：
 
 ```java
-private static Connection getConnection(String url, java.util.Properties info, Class<?> caller) throws SQLException { 
+private static Connection getConnection(String url, java.util.Properties info, Class<?> caller) throws SQLException {
     // 省略 try/catch代码块以及权限处理逻辑 
-    for(DriverInfo aDriver : registeredDrivers) { 
+    for(DriverInfo aDriver : registeredDrivers) {
         Connection con = aDriver.driver.connect(url, info); 
         return con; 
     } 
