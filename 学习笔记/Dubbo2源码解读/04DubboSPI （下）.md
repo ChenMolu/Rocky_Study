@@ -24,13 +24,13 @@
 +   META-INF/dubbo/internal/ 目录：该目录用于存放 Dubbo 内部使用的 SPI 配置文件。
     
 
-然后，Dubbo 将 SPI 配置文件改成了 **KV 格式**，例如：
+然后，Dubbo 将 SPI 配置文件改成了 **<font color=red>KV 格式</font>**，例如：
 
-```auto
+```java
 dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
 ```
 
-其中 key 被称为扩展名（也就是 ExtensionName），当我们在为一个接口查找具体实现类时，可以指定扩展名来选择相应的扩展实现。例如，这里指定扩展名为 dubbo，Dubbo SPI 就知道我们要使用：org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol 这个扩展实现类，只实例化这一个扩展实现即可，无须实例化 SPI 配置文件中的其他扩展实现类。
+其中 key 被称为扩展名（也就是 ExtensionName），当我们在为一个接口查找具体实现类时，可以指定扩展名来选择相应的扩展实现。例如，这里指定扩展名为 dubbo，Dubbo SPI 就知道我们要使用：```org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol``` 这个扩展实现类，只实例化这一个扩展实现即可，无须实例化 SPI 配置文件中的其他扩展实现类。
 
 使用 KV 格式的 SPI 配置文件的另一个好处是：让我们更容易定位到问题。假设我们使用的一个扩展实现类所在的 jar 包没有引入到项目中，那么 Dubbo SPI 在抛出异常的时候，会携带该扩展名信息，而不是简单地提示扩展实现类无法加载。这些更加准确的异常信息降低了排查问题的难度，提高了排查问题的效率。
 
@@ -44,13 +44,13 @@ Dubbo 中某个接口被 @SPI注解修饰时，就表示该接口是**扩展接�
 
 @SPI 注解的 value 值指定了默认的扩展名称，例如，在通过 Dubbo SPI 加载 Protocol 接口实现时，如果没有明确指定扩展名，则默认会将 @SPI 注解的 value 值作为扩展名，即加载 dubbo 这个扩展名对应的 org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol 这个扩展实现类，相关的 SPI 配置文件在 dubbo-rpc-dubbo 模块中，如下图所示：
 
-![Drawing 1.png](https://s0.lgstatic.com/i/image/M00/3E/A4/CgqCHl8s94mAaj2mAABcaXHNXqc467.png)
+![Drawing 1.png](./image/04DubboSPI （下）/CgqCHl8s94mAaj2mAABcaXHNXqc467.png)
 
 **那 ExtensionLoader 是如何处理 @SPI 注解的呢？**
 
 ExtensionLoader 位于 dubbo-common 模块中的 extension 包中，功能类似于 JDK SPI 中的 java.util.ServiceLoader。Dubbo SPI 的核心逻辑几乎都封装在 ExtensionLoader 之中（其中就包括 @SPI 注解的处理逻辑），其使用方式如下所示：
 
-```auto
+```java
 Protocol protocol = ExtensionLoader 
    .getExtensionLoader(Protocol.class).getExtension("dubbo");
 ```
@@ -83,11 +83,10 @@ Protocol protocol = ExtensionLoader
 +   **cachedClasses（Holder<Map<String, Class<?>>>类型）**：缓存了该 ExtensionLoader 加载的扩展名与扩展实现类之间的映射关系。cachedNames 集合的反向关系缓存。
     
 +   **cachedInstances（ConcurrentMap<String, Holder`<Object>`\>类型）**：缓存了该 ExtensionLoader 加载的扩展名与扩展实现对象之间的映射关系。
-    
 
 ExtensionLoader.getExtensionLoader() 方法会根据扩展接口从 EXTENSION\_LOADERS 缓存中查找相应的 ExtensionLoader 实例，核心实现如下：
 
-```auto
+```java
 public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) { 
     ExtensionLoader<T> loader =
          (ExtensionLoader<T>) EXTENSION_LOADERS.get(type); 
@@ -102,7 +101,7 @@ public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
 
 得到接口对应的 ExtensionLoader 对象之后会调用其 getExtension() 方法，根据传入的扩展名称从 cachedInstances 缓存中查找扩展实现的实例，最终将其实例化后返回：
 
-```auto
+```java
 public T getExtension(String name) { 
     // getOrCreateHolder()方法中封装了查找cachedInstances缓存的逻辑 
     Holder<Object> holder = getOrCreateHolder(name); 
@@ -134,7 +133,7 @@ public T getExtension(String name) {
 5.  如果扩展实现类实现了 Lifecycle 接口，在 initExtension() 方法中会调用 initialize() 方法进行初始化。
     
 
-```auto
+```java
 private T createExtension(String name) { 
     Class<?> clazz = getExtensionClasses().get(name); // --- 1 
     if (clazz == null) { 
@@ -473,5 +472,3 @@ public List<T> getActivateExtension(URL url, String[] values,
 Dubbo SPI 是 Dubbo 框架实现扩展机制的核心，希望你仔细研究其实现，为后续源码分析过程打下基础。
 
 也欢迎你在留言区分享你的学习心得和实践经验。
-
-\--- ### 精选评论 ##### \*\*安： > 这节课有点难 ######     编辑回复： >     同学，要加油哦~ ##### \*\*斌： > 扩展点下的扩展实现类 分为三种：第一种为普通的扩展实现类，第二种为adpative类型的扩展实现类用于根据url和状态来选择合适的扩展实现，第三种 为 wrapper类，也是继承了扩展类接口，并有一个拷贝构造函数参数类型为扩展类类型，用来实现AOP功能。通过extensionFactory实现依赖注入其他扩展实现包括spring的bean。总结了下这应该就是dubbo spi的核心 ##### \*\*杰： > 看懂spi代码花了一天 可能是水平太差了 ##### \*镇： > injectExtension（）方法进行扩展点实现类相互依赖自动注入 老师在什么情况下会需要实现类 相互依赖注入尼， ######     讲师回复： >     在通过SPI创建一个对象的时候，如果这个对象包含了其他的可以注册的字段，都会通过这里注入 ##### \*镇： > 老师例子中的demoFilter3为什么会排在第一位置尼 ######     讲师回复： >     示例中传入的values集合，明确指定了demoFilter3在第一位 ##### \*震： > 内容有点儿多，感觉消化不了，再看一遍~
