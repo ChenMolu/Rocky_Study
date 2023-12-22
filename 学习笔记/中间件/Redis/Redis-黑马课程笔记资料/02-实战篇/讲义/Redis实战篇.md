@@ -36,8 +36,6 @@
 
 以上这些内容咱们统统都会给小伙伴们讲解清楚，让大家充分理解如何使用Redis
 
-
-
 ![1653056228879](.\Redis实战篇.assets\1653056228879.png)
 
 ## 1、短信登录
@@ -70,8 +68,6 @@
 
 ![1653060588190](.\Redis实战篇.assets\1653060588190.png)
 
-
-
 ### 1.2 、基于Session实现登录流程
 
 **发送验证码：**
@@ -87,8 +83,6 @@
 **校验登录状态:**
 
 用户在请求时候，会从cookie中携带者JsessionId到后台，后台通过JsessionId从session中拿到用户信息，如果没有session信息，则进行拦截，如果有session信息，则将用户信息保存到threadLocal中，并且放行
-
-
 
 ![1653066208144](.\Redis实战篇.assets\1653066208144.png)
 
@@ -169,13 +163,9 @@
 
 通过以上讲解，我们可以得知 每个用户其实对应都是去找tomcat线程池中的一个线程来完成工作的， 使用完成后再进行回收，既然每个请求都是独立的，所以在每个用户去访问我们的工程时，我们可以使用threadlocal来做到线程隔离，每个线程操作自己的一份数据
 
-
-
 **温馨小贴士：关于threadlocal**
 
 如果小伙伴们看过threadLocal的源码，你会发现在threadLocal中，无论是他的put方法和他的get方法， 都是先从获得当前用户的线程，然后从线程中取出线程的成员变量map，只要线程不一样，map就不一样，所以可以通过这种方式来做到线程隔离
-
-
 
 ![1653068874258](.\Redis实战篇.assets\1653068874258.png)
 
@@ -312,8 +302,6 @@ public class UserHolder {
 
 ![1653319474181](.\Redis实战篇.assets\1653319474181.png)
 
-
-
 ### 1.8 基于Redis实现短信登录
 
 这里具体逻辑就不分析了，之前咱们已经重点分析过这个逻辑啦。
@@ -374,13 +362,13 @@ public Result login(LoginFormDTO loginForm, HttpSession session) {
 
 ![1653320822964](.\Redis实战篇.assets\1653320822964.png)
 
-####  1.9.2 优化方案
+#### 1.9.2 优化方案
 
 既然之前的拦截器无法对不需要拦截的路径生效，那么我们可以添加一个拦截器，在第一个拦截器中拦截所有的路径，把第二个拦截器做的事情放入到第一个拦截器中，同时刷新令牌，因为第一个拦截器有了threadLocal的数据，所以此时第二个拦截器只需要判断拦截器中的user对象是否存在即可，完成整体刷新功能。
 
 ![1653320764547](.\Redis实战篇.assets\1653320764547.png)
 
-#### 1.9.3 代码 
+#### 1.9.3 代码
 
 **RefreshTokenInterceptor**
 
@@ -423,7 +411,6 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         UserHolder.removeUser();
     }
 }
-	
 ```
 
 **LoginInterceptor**
@@ -445,8 +432,6 @@ public class LoginInterceptor implements HandlerInterceptor {
     }
 }
 ```
-
-
 
 ## 2、商户查询缓存
 
@@ -474,7 +459,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 
 由于其被**Static**修饰,所以随着类的加载而被加载到**内存之中**,作为本地缓存,由于其又被**final**修饰,所以其引用(例3:map)和对象(例3:new HashMap())之间的关系是固定的,不能改变,因此不用担心赋值(=)导致缓存失效;
 
-####  2.1.1 为什么要使用缓存
+#### 2.1.1 为什么要使用缓存
 
 一句话:因为**速度快,好用**
 
@@ -500,12 +485,6 @@ public class LoginInterceptor implements HandlerInterceptor {
 
 ![](.\Redis实战篇.assets\image-20220523212915666.png)
 
-
-
-
-
-
-
 ### 2.2 添加商户缓存
 
 在我们查询商户信息时，我们是直接操作从数据库中去进行查询的，大致逻辑是这样，直接查询数据库那肯定慢咯，所以我们需要增加缓存
@@ -530,8 +509,6 @@ public Result queryShopById(@PathVariable("id") Long id) {
 
 ![1653322190155](.\Redis实战篇.assets\1653322190155.png)
 
-
-
 ### 2.3 缓存更新策略
 
 缓存更新是redis为了节约内存而设计出来的一个东西，主要是因为内存数据宝贵，当我们向redis插入太多数据，此时就可能会导致缓存中的数据过多，所以redis会对部分数据进行更新，或者把他叫为淘汰更合适。
@@ -545,8 +522,6 @@ public Result queryShopById(@PathVariable("id") Long id) {
 ![1653322506393](.\Redis实战篇.assets\1653322506393.png)
 
 #### 2.3.1 、数据库缓存不一致解决方案：
-
-
 
 由于我们的**缓存的数据源来自于数据库**,而数据库的**数据是会发生变化的**,因此,如果当数据库中**数据发生变化,而缓存却没有同步**,此时就会有**一致性问题存在**,其后果是:
 
@@ -566,15 +541,15 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
 
 操作缓存和数据库时有三个问题需要考虑：
 
-
-
 如果采用第一个方案，那么假设我们每次操作数据库后，都操作缓存，但是中间如果没有人查询，那么这个更新动作实际上只有最后一次生效，中间的更新动作意义并不大，我们可以把缓存删除，等待再次查询时，将缓存中的数据加载出来
 
 * 删除缓存还是更新缓存？
+  
   * 更新缓存：每次更新数据库都更新缓存，无效写操作较多
   * 删除缓存：更新数据库时让缓存失效，查询时再更新缓存
 
 * 如何保证缓存与数据库的操作的同时成功或失败？
+  
   * 单体系统，将缓存与数据库操作放在一个事务
   * 分布式系统，利用TCC等分布式事务方案
 
@@ -585,8 +560,6 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
   * 先操作数据库，再删除缓存
 
 ![1653323595206](.\Redis实战篇.assets\1653323595206.png)
-
-
 
 ### 2.4 实现商铺和缓存与数据库双写一致
 
@@ -627,11 +600,7 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
     * 实现复杂
     * 存在误判可能
 
-
-
 **缓存空对象思路分析：**当我们客户端访问不存在的数据时，先请求redis，但是此时redis中没有数据，此时会访问到数据库，但是数据库中也没有数据，这个数据穿透了缓存，直击数据库，我们都知道数据库能够承载的并发不如redis这么高，如果大量的请求同时过来访问这种不存在的数据，这些请求就都会访问到数据库，简单的解决方案就是哪怕这个数据在数据库中也不存在，我们也把这个数据存入到redis中去，这样，下次用户过来访问这个不存在的数据，那么在redis中也能找到这个数据就不会进入到缓存了
-
-
 
 **布隆过滤：**布隆过滤器其实采用的是哈希思想来解决这个问题，通过一个庞大的二进制数组，走哈希思想去判断当前这个要查询的这个数据是否存在，如果布隆过滤器判断存在，则放行，这个请求会去访问redis，哪怕此时redis中的数据过期了，但是数据库中一定存在这个数据，在数据库中查询出来这个数据后，再将其放入到redis中，
 
@@ -641,8 +610,6 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
 
 ![1653326156516](.\Redis实战篇.assets\1653326156516.png)
 
-
-
 ### 2.6 编码解决商品查询的缓存穿透问题：
 
 核心思路如下：
@@ -650,8 +617,6 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
 在原来的逻辑中，我们如果发现这个数据在mysql中不存在，直接就返回404了，这样是会存在缓存穿透问题的
 
 现在的逻辑中：如果这个数据不存在，我们不会返回404 ，还是会把这个数据写入到Redis中，并且将value设置为空，欧当再次发起查询时，我们如果发现命中之后，判断这个value是否是null，如果是null，则是之前写入的数据，证明是缓存穿透数据，如果不是，则直接返回数据。
-
-
 
 ![1653327124561](.\Redis实战篇.assets\1653327124561.png)
 
@@ -669,8 +634,6 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
 * 做好数据的基础格式校验
 * 加强用户权限校验
 * 做好热点参数的限流
-
-
 
 ### 2.7 缓存雪崩问题及解决思路
 
@@ -696,11 +659,7 @@ Write Behind Caching Pattern ：调用者只操作缓存，其他线程去异步
 
 逻辑分析：假设线程1在查询缓存之后，本来应该去查询数据库，然后把这个数据重新加载到缓存的，此时只要线程1走完这个逻辑，其他线程就都能从缓存中加载这些数据了，但是假设在线程1没有走完的时候，后续的线程2，线程3，线程4同时过来访问当前这个方法， 那么这些线程都不能从缓存中查询到数据，那么他们就会同一时刻来访问查询缓存，都没查到，接着同一时间去访问数据库，同时的去执行数据库代码，对数据库访问压力过大
 
-
-
 ![1653328022622](.\Redis实战篇.assets\1653328022622.png)
-
-
 
 解决方案一、使用锁来解决：
 
@@ -803,15 +762,13 @@ private void unlock(String key) {
     }
 ```
 
-###  3.0 、利用逻辑过期解决缓存击穿问题
+### 3.0 、利用逻辑过期解决缓存击穿问题
 
 **需求：修改根据id查询商铺的业务，基于逻辑过期方式来解决缓存击穿问题**
 
 思路分析：当用户开始查询redis时，判断是否命中，如果没有命中则直接返回空数据，不查询数据库，而一旦命中后，将value取出，判断value中的过期时间是否满足，如果没有过期，则直接返回redis中的数据，如果过期，则在开启独立线程后直接返回之前的数据，独立线程去重构数据，重构完成后释放互斥锁。
 
 ![1653360308731](.\Redis实战篇.assets\1653360308731.png)
-
-
 
 如果封装数据：因为现在redis中存储的数据的value需要带上过期时间，此时要么你去修改原来的实体类，要么你
 
@@ -1425,7 +1382,6 @@ VoucherOrderServiceImpl
 **初步代码：增加一人一单逻辑**
 
 ```java
-
 @Override
 public Result seckillVoucher(Long voucherId) {
     // 1.查询优惠券
@@ -1487,7 +1443,7 @@ public Result seckillVoucher(Long voucherId) {
 @Transactional
 public synchronized Result createVoucherOrder(Long voucherId) {
 
-	Long userId = UserHolder.getUser().getId();
+    Long userId = UserHolder.getUser().getId();
          // 5.1.查询订单
         int count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
         // 5.2.判断是否存在
@@ -1528,8 +1484,8 @@ intern() 这个方法是从常量池中拿到数据，如果我们直接使用us
 ```java
 @Transactional
 public  Result createVoucherOrder(Long voucherId) {
-	Long userId = UserHolder.getUser().getId();
-	synchronized(userId.toString().intern()){
+    Long userId = UserHolder.getUser().getId();
+    synchronized(userId.toString().intern()){
          // 5.1.查询订单
         int count = query().eq("user_id", userId).eq("voucher_id", voucherId).count();
         // 5.2.判断是否存在
@@ -1575,8 +1531,6 @@ public  Result createVoucherOrder(Long voucherId) {
 
 ![1653383810643](.\Redis实战篇.assets\1653383810643.png)
 
-
-
 ### 3.7 集群环境下的并发问题
 
 通过加锁可以解决在单机情况下的一人一单安全问题，但是在集群模式下就不行了。
@@ -1619,8 +1573,6 @@ public  Result createVoucherOrder(Long voucherId) {
 
 安全性：安全也是程序中必不可少的一环
 
-
-
 ![1653381992018](.\Redis实战篇.assets\1653381992018.png)
 
 常见的分布式锁有三种
@@ -1638,15 +1590,15 @@ Zookeeper：zookeeper也是企业级开发中较好的一个实现分布式锁�
 实现分布式锁时需要实现的两个基本方法：
 
 * 获取锁：
-
+  
   * 互斥：确保只能有一个线程获取锁
   * 非阻塞：尝试一次，成功返回true，失败返回false
 
 * 释放锁：
-
+  
   * 手动释放
   * 超时释放：获取锁时添加一个超时时间
-
+  
   ![1653382669900](.\Redis实战篇.assets\1653382669900.png)
 
 核心思路：
@@ -1720,7 +1672,7 @@ public void unlock() {
         SimpleRedisLock lock = new SimpleRedisLock("order:" + userId, stringRedisTemplate);
         //获取锁对象
         boolean isLock = lock.tryLock(1200);
-		//加锁失败
+        //加锁失败
         if (!isLock) {
             return Result.fail("不允许重复下单");
         }
@@ -1744,8 +1696,6 @@ public void unlock() {
 解决方案：解决方案就是在每个线程释放锁的时候，去判断一下当前这把锁是否属于自己，如果属于自己，则不进行锁的删除，假设还是上边的情况，线程1卡顿，锁自动释放，线程2进入到锁的内部执行逻辑，此时线程1反应过来，然后删除锁，但是线程1，一看当前这把锁不是属于自己，于是不进行删除锁逻辑，当线程2走到删除锁逻辑时，如果没有卡过自动释放锁的时间点，则判断当前这把锁是属于自己的，于是删除这把锁。
 
 ![1653385920025](.\Redis实战篇.assets\1653385920025.png)
-
-
 
 ### 4.5 解决Redis分布式锁误删问题
 
@@ -1846,13 +1796,13 @@ return name
 
 释放锁的业务流程是这样的
 
-​	1、获取锁中的线程标示
+​    1、获取锁中的线程标示
 
-​	2、判断是否与指定的标示（当前线程标示）一致
+​    2、判断是否与指定的标示（当前线程标示）一致
 
-​	3、如果一致则释放锁（删除）
+​    3、如果一致则释放锁（删除）
 
-​	4、如果不一致则什么都不做
+​    4、如果不一致则什么都不做
 
 如果用Lua脚本来表示则是这样的：
 
@@ -1868,8 +1818,6 @@ end
 -- 不一致，则直接返回
 return 0
 ```
-
-
 
 ### 4.8 利用Java代码调用Lua脚本改造分布式锁
 
@@ -1948,9 +1896,9 @@ Redission提供了分布式锁的多种多样的功能
 
 ```java
 <dependency>
-	<groupId>org.redisson</groupId>
-	<artifactId>redisson</artifactId>
-	<version>3.13.6</version>
+    <groupId>org.redisson</groupId>
+    <artifactId>redisson</artifactId>
+    <version>3.13.6</version>
 </dependency>
 ```
 
@@ -1970,7 +1918,6 @@ public class RedissonConfig {
         return Redisson.create(config);
     }
 }
-
 ```
 
 如何使用Redission的分布式锁
@@ -1993,11 +1940,11 @@ void testRedisson() throws Exception{
             //释放锁
             lock.unlock();
         }
-        
+
     }
-    
-    
-    
+
+
+
 }
 ```
 
@@ -2034,8 +1981,8 @@ public Result seckillVoucher(Long voucherId) {
         RLock lock = redissonClient.getLock("lock:order:" + userId);
         //获取锁对象
         boolean isLock = lock.tryLock();
-       
-		//加锁失败
+
+        //加锁失败
         if (!isLock) {
             return Result.fail("不允许重复下单");
         }
@@ -2170,7 +2117,7 @@ private void renewExpiration() {
     if (ee == null) {
         return;
     }
-    
+
     Timeout task = commandExecutor.getConnectionManager().newTimeout(new TimerTask() {
         @Override
         public void run(Timeout timeout) throws Exception {
@@ -2182,14 +2129,14 @@ private void renewExpiration() {
             if (threadId == null) {
                 return;
             }
-            
+
             RFuture<Boolean> future = renewExpirationAsync(threadId);
             future.onComplete((res, e) -> {
                 if (e != null) {
                     log.error("Can't update lock " + getName() + " expiration", e);
                     return;
                 }
-                
+
                 if (res) {
                     // reschedule itself
                     renewExpiration();
@@ -2197,7 +2144,7 @@ private void renewExpiration() {
             });
         }
     }, internalLockLeaseTime / 3, TimeUnit.MILLISECONDS);
-    
+
     ee.setTimeout(task);
 }
 ```
@@ -2217,8 +2164,6 @@ private void renewExpiration() {
 那么MutiLock 加锁原理是什么呢？笔者画了一幅图来说明
 
 当我们去设置了多个锁时，redission会将多个锁添加到一个集合中，然后用while循环去不停去尝试拿锁，但是会有一个总共的加锁时间，这个时间是用需要加锁的个数 * 1500ms ，假设有3个锁，那么时间就是4500ms，假设在这4500ms内，所有的锁都加锁成功， 那么此时才算是加锁成功，如果在4500ms有线程加锁失败，则会再次去进行重试.
-
-
 
 ![1653553093967](.\Redis实战篇.assets\1653553093967.png)
 
@@ -2248,8 +2193,6 @@ private void renewExpiration() {
 
 ![1653560986599](.\Redis实战篇.assets\1653560986599.png)
 
-
-
 优化方案：我们将耗时比较短的逻辑判断放入到redis中，比如是否库存足够，比如是否一人一单，这样的操作，只要这种逻辑可以完成，就意味着我们是一定可以下单完成的，我们只需要进行快速的逻辑判断，根本就不用等下单逻辑走完，我们直接给用户返回成功， 再在后台开一个线程，后台线程慢慢的去执行queue里边的消息，这样程序不就超级快了吗？而且也不用担心线程池消耗殆尽的问题，因为这里我们的程序中并没有手动使用任何线程池，当然这里边有两个难点
 
 第一个难点是我们怎么在redis中去快速校验一人一单，还有库存判断
@@ -2258,13 +2201,9 @@ private void renewExpiration() {
 
 ![1653561657295](.\Redis实战篇.assets\1653561657295.png)
 
-
-
 我们现在来看看整体思路：当用户下单之后，判断库存是否充足只需要导redis中去根据key找对应的value是否大于0即可，如果不充足，则直接结束，如果充足，继续在redis中判断用户是否可以下单，如果set集合中没有这条数据，说明他可以下单，如果set集合中没有这条记录，则将userId和优惠卷存入到redis中，并且返回0，整个过程需要保证是原子性的，我们可以使用lua来操作
 
 当以上判断逻辑走完之后，我们可以判断当前redis中返回的结果是否是0 ，如果是0，则表示可以下单，则将之前说的信息存入到到queue中去，然后返回，然后再来个线程异步的下单，前端可以通过返回的订单id来判断是否下单成功。
-
-
 
 ![1653562234886](.\Redis实战篇.assets\1653562234886.png)
 
@@ -2279,7 +2218,7 @@ private void renewExpiration() {
 * 如果抢购成功，将优惠券id和用户id封装后存入阻塞队列
 
 * 开启线程任务，不断从阻塞队列中获取信息，实现异步下单功能
-
+  
   ![1656080546603](.\Redis实战篇.assets\1656080546603.png)
 
 VoucherServiceImpl
@@ -2399,9 +2338,9 @@ private void init() {
                 } catch (Exception e) {
                     log.error("处理订单异常", e);
                 }
-          	 }
+               }
         }
-     
+
        private void handleVoucherOrder(VoucherOrder voucherOrder) {
             //1.获取用户
             Long userId = voucherOrder.getUserId();
@@ -2416,7 +2355,7 @@ private void init() {
                 return;
             }
             try {
-				//注意：由于是spring的事务是放在threadLocal中，此时的是多线程，事务会失效
+                //注意：由于是spring的事务是放在threadLocal中，此时的是多线程，事务会失效
                 proxy.createVoucherOrder(voucherOrder);
             } finally {
                 // 释放锁
@@ -2424,7 +2363,7 @@ private void init() {
             }
     }
      //a
-	private BlockingQueue<VoucherOrder> orderTasks =new  ArrayBlockingQueue<>(1024 * 1024);
+    private BlockingQueue<VoucherOrder> orderTasks =new  ArrayBlockingQueue<>(1024 * 1024);
 
     @Override
     public Result seckillVoucher(Long voucherId) {
@@ -2457,7 +2396,7 @@ private void init() {
         //4.返回订单id
         return Result.ok(orderId);
     }
-     
+
       @Transactional
     public  void createVoucherOrder(VoucherOrder voucherOrder) {
         Long userId = voucherOrder.getUserId();
@@ -2481,9 +2420,8 @@ private void init() {
             return ;
         }
         save(voucherOrder);
- 
-    }
 
+    }
 ```
 
 **小总结：**
@@ -2495,8 +2433,6 @@ private void init() {
 * 基于阻塞队列的异步秒杀存在哪些问题？
   * 内存限制问题
   * 数据安全问题
-
-
 
 ## 7、Redis消息队列
 
@@ -2515,8 +2451,6 @@ private void init() {
 这种场景在我们秒杀中就变成了：我们下单之后，利用redis去进行校验下单条件，再通过队列把消息发送出去，然后再启动一个线程去消费这个消息，完成解耦，同时也加快我们的响应速度。
 
 这里我们可以使用一些现成的mq，比如kafka，rabbitmq等等，但是呢，如果没有安装mq，我们也可以直接使用redis提供的mq方案，降低我们的部署和学习成本。
-
-
 
 ### 7.2 Redis消息队列-基于List实现消息队列
 
@@ -2541,8 +2475,6 @@ private void init() {
 * 无法避免消息丢失
 * 只支持单消费者
 
-
-
 ### 7.3 Redis消息队列-基于PubSub的消息队列
 
 PubSub（发布订阅）是Redis2.0版本引入的消息传递模型。顾名思义，消费者可以订阅一个或多个channel，生产者向对应channel发送消息后，所有订阅者都能收到相关消息。
@@ -2563,8 +2495,6 @@ PubSub（发布订阅）是Redis2.0版本引入的消息传递模型。顾名思
 * 不支持数据持久化
 * 无法避免消息丢失
 * 消息堆积有上限，超出时数据丢失
-
-
 
 ### 7.4 Redis消息队列-基于Stream的消息队列
 
@@ -2602,8 +2532,6 @@ STREAM类型消息队列的XREAD命令特点：
 * 一个消息可以被多个消费者读取
 * 可以阻塞读取
 * 有消息漏读的风险
-
-
 
 ### 7.5 Redis消息队列-基于Stream的消息队列-消费者组
 
@@ -2749,7 +2677,6 @@ private class VoucherOrderHandler implements Runnable {
         }
     }
 }
-
 ```
 
 ## 8、达人探店
@@ -2839,7 +2766,7 @@ public Result queryBlogById(Long id) {
     }
     // 2.查询blog有关的用户
     queryBlogUser(blog);
-  
+
     return Result.ok(blog);
 }
 ```
@@ -3112,27 +3039,27 @@ public Result isFollow(Long followUserId) {
 // UserController 根据id查询用户
 @GetMapping("/{id}")
 public Result queryUserById(@PathVariable("id") Long userId){
-	// 查询详情
-	User user = userService.getById(userId);
-	if (user == null) {
-		return Result.ok();
-	}
-	UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-	// 返回
-	return Result.ok(userDTO);
+    // 查询详情
+    User user = userService.getById(userId);
+    if (user == null) {
+        return Result.ok();
+    }
+    UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+    // 返回
+    return Result.ok(userDTO);
 }
 
 // BlogController  根据id查询博主的探店笔记
 @GetMapping("/of/user")
 public Result queryBlogByUserId(
-		@RequestParam(value = "current", defaultValue = "1") Integer current,
-		@RequestParam("id") Long id) {
-	// 根据用户查询
-	Page<Blog> page = blogService.query()
-			.eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
-	// 获取当前页数据
-	List<Blog> records = page.getRecords();
-	return Result.ok(records);
+        @RequestParam(value = "current", defaultValue = "1") Integer current,
+        @RequestParam("id") Long id) {
+    // 根据用户查询
+    Page<Blog> page = blogService.query()
+            .eq("user_id", id).page(new Page<>(current, SystemConstants.MAX_PAGE_SIZE));
+    // 获取当前页数据
+    List<Blog> records = page.getRecords();
+    return Result.ok(records);
 }
 ```
 
@@ -3216,8 +3143,6 @@ public Result followCommons(Long id) {
 
 ![1653808641260](.\Redis实战篇.assets\1653808641260.png)
 
-
-
 对于新型的Feed流的的效果：不需要我们用户再去推送信息，而是系统分析用户到底想要什么，然后直接把内容推送给用户，从而使用户能够更加的节约时间，不用主动去寻找。
 
 ![1653808993693](.\Redis实战篇.assets\1653808993693.png)
@@ -3253,8 +3178,6 @@ Timeline：不做内容筛选，简单的按照内容发布时间排序，常用
 缺点：比较延迟，当用户读取数据时才去关注的人里边去读取数据，假设用户关注了大量的用户，那么此时就会拉取海量的内容，对服务器压力巨大。
 
 ![1653809450816](.\Redis实战篇.assets\1653809450816.png)
-
-
 
 **推模式**：也叫做写扩散。
 
@@ -3394,7 +3317,7 @@ public Result queryBlogOfFollow(Long max, Integer offset) {
             os = 1;
         }
     }
-	os = minTime == max ? os : os + offset;
+    os = minTime == max ? os : os + offset;
     // 5.根据id查询blog
     String idStr = StrUtil.join(",", ids);
     List<Blog> blogs = query().in("id", ids).last("ORDER BY FIELD(id," + idStr + ")").list();
@@ -3435,8 +3358,6 @@ GEO就是Geolocation的简写形式，代表地理坐标。Redis在3.2版本中�
 具体场景说明：
 
 ![1653822036941](.\Redis实战篇.assets\1653822036941.png)
-
-
 
 当我们点击美食之后，会出现一系列的商家，商家中可以按照多种排序方式，我们此时关注的是距离，这个地方就需要使用到我们的GEO，向后台传入当前app收集的地址(我们此处是写死的) ，以当前坐标作为圆心，同时绑定相同的店家类型type，以及分页信息，把这几个条件传入后台，后台查询出对应的数据再返回。
 
@@ -3586,8 +3507,6 @@ ShopServiceImpl
     }
 ```
 
-
-
 ## 11、用户签到
 
 #### 11.1、用户签到-BitMap功能演示
@@ -3686,8 +3605,6 @@ Java逻辑代码：获得当前这个月的最后一次签到数据，定义一�
 
 有用户有时间我们就可以组织出对应的key，此时就能找到这个用户截止这天的所有签到记录，再根据这套算法，就能统计出来他连续签到的次数了
 
-
-
 ![1653835784444](.\Redis实战篇.assets\1653835784444.png)
 
 代码
@@ -3779,11 +3696,7 @@ public Result signCount() {
 
 id % bitmap.size  = 算出当前这个id对应应该落在bitmap的哪个索引上，然后将这个值从0变成1，然后当用户来查询数据时，此时已经没有了list，让用户用他查询的id去用相同的哈希算法， 算出来当前这个id应当落在bitmap的哪一位，然后判断这一位是0，还是1，如果是0则表明这一位上的数据一定不存在，  采用这种方式来处理，需要重点考虑一个事情，就是误差率，所谓的误差率就是指当发生哈希冲突的时候，产生的误差。
 
-
-
 ![1653836578970](.\Redis实战篇.assets\1653836578970.png)
-
-
 
 ## 12、UV统计
 
